@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Compiler — Dead Code Elimination &amp; Constant Folding</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">
+            <span class="logo-icon">⚙</span>
+            <div>
+                <h1>MINI COMPILER</h1>
+                <p class="subtitle">Dead Code Elimination &amp; Constant Folding</p>
+            </div>
+        </div>
+    </div>
+    <div class="header-right">
+        <span class="status-badge" id="backendStatus">
+            <span class="status-dot"></span>
+            <span class="status-text">Checking…</span>
+        </span>
+        <button class="btn btn-primary" id="btnRun" onclick="runCompiler()">
+            <span class="btn-icon">▶</span> Run Compiler
+        </button>
+        <button class="btn btn-secondary" id="btnReset" onclick="resetAll()">
+            ↻ Reset
+        </button>
+    </div>
+</header>
+
+<!-- ═══════════ MAIN LAYOUT ═══════════ -->
+<main class="main-grid">
+
+    <!-- ──── LEFT: Editor Panel ──── -->
+    <section class="panel editor-panel">
+        <div class="panel-header">
+            <h2><span class="panel-icon">📝</span> Source Code</h2>
+            <div class="panel-actions">
+                <button class="btn-small" onclick="copySource()" title="Copy source code">📋 Copy</button>
+                <button class="btn-small" onclick="clearEditor()" title="Clear editor">✕ Clear</button>
+                <div class="dropdown" id="exampleDropdown">
+                    <button class="btn-small btn-accent" onclick="toggleExamples()">📂 Examples ▾</button>
+                    <div class="dropdown-menu" id="exampleMenu">
+                        <button onclick="loadExample(1)">1. Constant Folding</button>
+                        <button onclick="loadExample(2)">2. Dead Code Elimination</button>
+                        <button onclick="loadExample(3)">3. Combined Optimization</button>
+                        <button onclick="loadExample(4)">4. Variable Dependencies</button>
+                        <button onclick="loadExample(5)">5. Syntax Error</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="editor-wrapper">
+            <div class="line-numbers" id="lineNumbers"></div>
+            <textarea id="codeEditor" spellcheck="false" placeholder="// Enter your C code here..."
+>#include &lt;stdio.h&gt;
+
+int main() {
+    int a = 5 + 3;
+    int b = 10 * 2;
+    int unused = 99;
+    int c = a + b;
+    printf("%d %d %d", a, b, c);
+    return 0;
+}</textarea>
+        </div>
+    </section>
+
+    <!-- ──── RIGHT: Results Panel ──── -->
+    <section class="panel results-panel">
+        <!-- Pipeline status -->
+        <div class="pipeline" id="pipeline">
+            <div class="pipeline-stage" data-stage="lexical">
+                <span class="stage-dot"></span> Lexical Analysis
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" data-stage="syntax">
+                <span class="stage-dot"></span> Syntax Analysis
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" data-stage="intermediate">
+                <span class="stage-dot"></span> Intermediate Code
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" data-stage="folding">
+                <span class="stage-dot"></span> Constant Folding
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" data-stage="deadcode">
+                <span class="stage-dot"></span> Dead Code Elim
+            </div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" data-stage="codegen">
+                <span class="stage-dot"></span> Code Generation
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="tokens" onclick="switchTab('tokens')">Tokens</button>
+            <button class="tab" data-tab="syntax" onclick="switchTab('syntax')">Syntax</button>
+            <button class="tab" data-tab="tac" onclick="switchTab('tac')">TAC</button>
+            <button class="tab" data-tab="folding" onclick="switchTab('folding')">Constant Folding</button>
+            <button class="tab" data-tab="deadcode" onclick="switchTab('deadcode')">Dead Code</button>
+            <button class="tab" data-tab="optimized" onclick="switchTab('optimized')">Optimized Code</button>
+            <button class="tab" data-tab="comparison" onclick="switchTab('comparison')">Comparison</button>
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-content" id="tabContent">
+
+            <div class="tab-pane active" id="pane-tokens">
+                <div class="output-placeholder" id="placeholder-tokens">
+                    Run the compiler to see tokens
+                </div>
+                <pre class="output-code" id="output-tokens"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-syntax">
+                <div class="output-placeholder" id="placeholder-syntax">
+                    Run the compiler to see syntax analysis
+                </div>
+                <pre class="output-code" id="output-syntax"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-tac">
+                <div class="output-placeholder" id="placeholder-tac">
+                    Run the compiler to see Three Address Code
+                </div>
+                <pre class="output-code" id="output-tac"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-folding">
+                <div class="output-placeholder" id="placeholder-folding">
+                    Run the compiler to see constant folding results
+                </div>
+                <pre class="output-code" id="output-folding"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-deadcode">
+                <div class="output-placeholder" id="placeholder-deadcode">
+                    Run the compiler to see dead code elimination
+                </div>
+                <pre class="output-code" id="output-deadcode"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-optimized">
+                <div class="output-placeholder" id="placeholder-optimized">
+                    Run the compiler to see optimized code
+                </div>
+                <div class="optimized-header" id="optimized-header" style="display:none;">
+                    <button class="btn-small" onclick="copyOptimized()">📋 Copy Optimized Code</button>
+                </div>
+                <pre class="output-code" id="output-optimized"></pre>
+            </div>
+
+            <div class="tab-pane" id="pane-comparison">
+                <div class="output-placeholder" id="placeholder-comparison">
+                    Run the compiler to see code comparison
+                </div>
+                <div class="comparison-view" id="comparison-view" style="display:none;">
+                    <div class="compare-col">
+                        <h3>Original Code</h3>
+                        <pre class="output-code" id="compare-original"></pre>
+                    </div>
+                    <div class="compare-col">
+                        <h3>Optimized Code</h3>
+                        <pre class="output-code" id="compare-optimized"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- ═══════════ STATISTICS BAR ═══════════ -->
+<section class="stats-bar" id="statsBar" style="display:none;">
+    <div class="stat-card">
+        <span class="stat-value" id="statOriginal">0</span>
+        <span class="stat-label">Original Statements</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="statOptimized">0</span>
+        <span class="stat-label">Optimized Statements</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="statFolded">0</span>
+        <span class="stat-label">Constants Folded</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" id="statDead">0</span>
+        <span class="stat-label">Dead Code Removed</span>
+    </div>
+    <div class="stat-card highlight">
+        <span class="stat-value" id="statPercent">0%</span>
+        <span class="stat-label">Optimization</span>
+    </div>
+</section>
+
+<!-- ═══════════ TOAST NOTIFICATION ═══════════ -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
