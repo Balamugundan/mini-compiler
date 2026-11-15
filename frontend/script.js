@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════ */
 
 // ──── Configuration ────
-const API_URL = "http://localhost:8000";
+const API_URL = "https://mini-compiler-p4uz.onrender.com";
 
 // ──── Example programs ────
 const EXAMPLES = {
